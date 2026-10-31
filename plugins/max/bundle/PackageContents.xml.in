@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sisir for 3ds Max, as built for one version. Sisir's Plugins > 3ds Max menu writes the
+     installed copy itself (src/DccPlugins.cpp), with one set of components per installed version. -->
+<ApplicationPackage SchemaVersion="1.0" AutodeskProduct="3ds Max" ProductType="Application"
+    Name="Sisir for 3ds Max" Description="Import Sisir scenes: mesh, guides, hair rendered in Arnold, cards."
+    AppVersion="1.3.0" Author="Sisir" ProductCode="{6A3F2C1E-5B7D-4E8A-9C21-3D4B5E6F7A80}"
+    UpgradeCode="{9B1E7D24-0C3A-4F5B-8E62-1A2B3C4D5E6F}">
+  <CompanyDetails Name="Sisir" />
+  <Components Description="pre-start-up scripts parts">
+    <RuntimeRequirements OS="Win64" Platform="3ds Max" SeriesMin="@MAX_VERSION@" SeriesMax="@MAX_VERSION@" />
+    <ComponentEntry ModuleName="./Contents/scripts/SisirMenu.ms" />
+  </Components>
+  <Components Description="plugins parts">
+    <RuntimeRequirements OS="Win64" Platform="3ds Max" SeriesMin="@MAX_VERSION@" SeriesMax="@MAX_VERSION@" />
+    <ComponentEntry ModuleName="./Contents/@MAX_VERSION@/SisirForMax.dlo" />
+  </Components>
+</ApplicationPackage>

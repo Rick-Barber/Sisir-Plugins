@@ -1,0 +1,14 @@
+build/
+build_maya*/
+build_max*/
+vcpkg_installed/
+__pycache__/
+*.pyc
+*.user
+*.sln
+*.vcxproj*
+*.pdb
+*.ilk
+*.log
+.vs/
+.vscode/

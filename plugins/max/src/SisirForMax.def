@@ -1,0 +1,9 @@
+LIBRARY SisirForMax
+EXPORTS
+	LibDescription
+	LibNumberClasses
+	LibClassDesc
+	LibVersion
+	LibInitialize
+	LibShutdown
+	sisirGetHairExportView

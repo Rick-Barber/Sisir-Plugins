@@ -1,0 +1,16 @@
+; The Arnold C functions Sisir for 3ds Max calls (common/ArnoldCurves.h), for an import library that
+; needs no Arnold install to build. ai.dll is delay-loaded: these resolve only inside MAXtoA's
+; translation, from the ai.dll MAXtoA has already loaded. All exist since Arnold 7.0.
+LIBRARY ai.dll
+EXPORTS
+    AiArray
+    AiArrayAllocate
+    AiArrayMap
+    AiArrayUnmap
+    AiNodeDeclare
+    AiNodeLookUpUserParameter
+    AiNodeSetArray
+    AiNodeSetStr
+    AiCreateAtStringData_private
+    AiAtStringLength
+    AiAtStringHash

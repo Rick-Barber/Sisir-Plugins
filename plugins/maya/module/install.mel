@@ -1,0 +1,43 @@
+// Sisir for Maya installer: drag this file into a Maya viewport.
+//
+// Writes SisirForMaya.mod into your user modules folder, pointing at the SisirForMaya folder next
+// to this file, then loads the plug-in and sets it to load at startup. Nothing is copied: keep the
+// folder where it is (or move it and install again).
+
+global proc sisirInstall() {
+	string $here = `whatIs sisirInstall`;
+	// "Mel procedure found in: C:/.../install.mel"
+	string $file = substring($here, size("Mel procedure found in: ") + 1, size($here));
+	string $root = dirname($file);
+	string $module = $root + "/SisirForMaya";
+	if (!`filetest -d $module`) {
+		confirmDialog -title "Sisir for Maya" -message ("SisirForMaya folder not found next to install.mel:\n" + $root) -button "OK";
+		return;
+	}
+	string $version = `about -majorVersion`;
+	if (!`filetest -f ($module + "/plug-ins/" + $version + "/SisirForMaya.mll")`) {
+		confirmDialog -title "Sisir for Maya" -message ("This package has no build for Maya " + $version + ".") -button "OK";
+		return;
+	}
+	string $modulesDir = `internalVar -userAppDir` + "modules";
+	sysFile -makeDir $modulesDir;
+	string $modFile = $modulesDir + "/SisirForMaya.mod";
+	int $fh = `fopen $modFile "w"`;
+	string $versions[] = { "2022", "2023", "2024", "2025", "2026" };
+	for ($v in $versions) {
+		fprint $fh ("+ MAYAVERSION:" + $v + " PLATFORM:win64 SisirForMaya 1.3.0 " + $module + "\n");
+		fprint $fh ("plug-ins: plug-ins/" + $v + "\n");
+		fprint $fh ("MAYA_SCRIPT_PATH +:= scripts\n");
+		fprint $fh ("MTOA_EXTENSIONS_PATH +:= extensions/" + $v + "\n\n");
+	}
+	fclose $fh;
+
+	// Usable right away, without a restart.
+	string $plugin = $module + "/plug-ins/" + $version + "/SisirForMaya.mll";
+	putenv "MAYA_SCRIPT_PATH" (`getenv "MAYA_SCRIPT_PATH"` + ";" + $module + "/scripts");
+	if (!`pluginInfo -q -loaded SisirForMaya`) loadPlugin $plugin;
+	pluginInfo -edit -autoload true $plugin;
+	confirmDialog -title "Sisir for Maya" -message ("Installed. Sisir scenes now open from File > Open and the Sisir menu.\n\nArnold rendering of Sisir hair starts with the next Maya session.") -button "OK";
+}
+
+sisirInstall();

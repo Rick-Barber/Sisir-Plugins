@@ -1,0 +1,9 @@
+{
+  "name": "sisir-plugins",
+  "version-string": "1.3.0",
+  "description": "SisirBridge.exe (Sisir for Blender). Sisir for Maya and 3ds Max link a static Alembic instead: vcpkg install alembic:x64-windows-static-md",
+  "dependencies": [
+    "qtbase",
+    "alembic"
+  ]
+}

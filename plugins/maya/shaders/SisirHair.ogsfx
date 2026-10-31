@@ -1,0 +1,122 @@
+// Sisir hair in Viewport 2.0 (OpenGL Core Profile). Same as SisirHair.fx: ribbons at the strands'
+// real widths, Sisir's own viewport hair shading.
+
+uniform mat4 gWorld : World;
+uniform mat4 gViewProj : ViewProjection;
+uniform mat4 gViewInv : ViewInverse;
+uniform mat4 gProj : Projection;
+uniform vec2 gViewportSize : ViewportPixelSize;
+
+uniform float gWidthScale = 1.0;
+uniform float gMinPixelWidth = 0.0; // Sisir draws real widths and relies on MSAA
+uniform float gUseSetColor = 0.0;
+uniform vec4 gSetColor = {0.9, 0.8, 0.65, 1.0};
+uniform vec4 gTint = {1.0, 1.0, 1.0, 0.0};
+uniform float gUseGradient = 0.0;
+uniform float gGradient[48];
+
+attribute vsIn {
+	vec3 inPos : POSITION;
+	vec4 inCol : COLOR0;
+	vec3 inTan : TANGENT;
+	vec3 inWidthAlong : TEXCOORD0;
+};
+
+attribute vsToGs {
+	vec3 gsWpos;
+	vec3 gsWtan;
+	vec4 gsCol;
+	float gsWidth;
+	vec2 gsAlongRandom;
+};
+
+attribute gsToPs {
+	vec3 psWpos;
+	vec3 psWtan;
+	vec4 psCol;
+	vec2 psAlongRandom;
+};
+
+attribute psOut {
+	vec4 outColor : COLOR0;
+};
+
+GLSLShader VS {
+	void main() {
+		vec4 w = gWorld * vec4(inPos, 1.0);
+		gsWpos = w.xyz;
+		gsWtan = (gWorld * vec4(inTan, 0.0)).xyz;
+		gsCol = (gUseSetColor > 0.5) ? gSetColor : inCol;
+		if (gUseGradient > 0.5) {
+			float x = clamp(inWidthAlong.y, 0.0, 1.0) * 15.0;
+			int i0 = min(int(x), 14);
+			float f = x - float(i0);
+			vec3 a = vec3(gGradient[i0 * 3], gGradient[i0 * 3 + 1], gGradient[i0 * 3 + 2]);
+			vec3 b = vec3(gGradient[i0 * 3 + 3], gGradient[i0 * 3 + 4], gGradient[i0 * 3 + 5]);
+			gsCol = vec4(mix(a, b, f) * gSetColor.rgb, 1.0);
+		}
+		gsAlongRandom = inWidthAlong.yz;
+		gsWidth = inWidthAlong.x * gWidthScale * length((gWorld * vec4(1.0, 0.0, 0.0, 0.0)).xyz);
+		gl_Position = w;
+	}
+}
+
+GLSLShader GS {
+	layout(lines) in;
+	layout(triangle_strip, max_vertices = 4) out;
+
+	vec3 ribbonSide(vec3 wpos, vec3 wtan, float width, vec3 eye) {
+		vec3 toEye = eye - wpos;
+		float dist = length(toEye);
+		toEye /= max(dist, 1e-6);
+		vec3 t = normalize(wtan + vec3(1e-9));
+		vec3 side = cross(t, toEye);
+		float len = length(side);
+		side = (len > 1e-6) ? side / len : normalize(cross(t, vec3(0.0, 1.0, 0.0)) + vec3(1e-9));
+		float pixel = 2.0 * dist / max(gProj[1][1] * gViewportSize.y, 1e-6);
+		return side * 0.5 * max(width, gMinPixelWidth * pixel);
+	}
+
+	void emit(vec3 p, vec3 t, vec4 c, vec2 ar) {
+		psWpos = p;
+		psWtan = t;
+		psCol = c;
+		psAlongRandom = ar;
+		gl_Position = gViewProj * vec4(p, 1.0);
+		EmitVertex();
+	}
+
+	void main() {
+		vec3 eye = gViewInv[3].xyz;
+		vec3 s0 = ribbonSide(gsWpos[0], gsWtan[0], gsWidth[0], eye);
+		vec3 s1 = ribbonSide(gsWpos[1], gsWtan[1], gsWidth[1], eye);
+		emit(gsWpos[0] - s0, gsWtan[0], gsCol[0], gsAlongRandom[0]);
+		emit(gsWpos[0] + s0, gsWtan[0], gsCol[0], gsAlongRandom[0]);
+		emit(gsWpos[1] - s1, gsWtan[1], gsCol[1], gsAlongRandom[1]);
+		emit(gsWpos[1] + s1, gsWtan[1], gsCol[1], gsAlongRandom[1]);
+		EndPrimitive();
+	}
+}
+
+GLSLShader PS {
+	void main() {
+		vec3 eye = gViewInv[3].xyz;
+		vec3 v = normalize(eye - psWpos);
+		vec3 t = normalize(psWtan + vec3(1e-9));
+		// Exactly Sisir's viewport hair shading (Renderer.cpp kHairFs), same constants.
+		float tv = dot(t, v);
+		float ndl = sqrt(clamp(1.0 - tv * tv, 0.0, 1.0));
+		float spec = pow(ndl, 32.0);
+		vec3 c = psCol.rgb * (0.3 + 0.7 * ndl) + vec3(0.08 * spec);
+		c = mix(c, gTint.rgb, gTint.a);
+		outColor = vec4(c, 1.0);
+	}
+}
+
+technique Main {
+	pass p0 {
+		VertexShader (in vsIn, out vsToGs) = VS;
+		GeometryShader (in vsToGs, out gsToPs) = GS;
+		PixelShader (in gsToPs, out psOut) = PS;
+	}
+}

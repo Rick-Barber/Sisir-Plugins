@@ -1,0 +1,28 @@
+// Attribute Editor layout for sisirHairShape.
+
+global proc AEsisirHairShapeTemplate(string $nodeName) {
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -beginLayout "Sisir Hair" -collapse 0;
+		editorTemplate -addControl "widthScale";
+		editorTemplate -addSeparator;
+		editorTemplate -addControl "displayPercent";
+		editorTemplate -addControl "renderPercent";
+		editorTemplate -addSeparator;
+		editorTemplate -addControl "colorMode";
+		editorTemplate -addControl "setColor";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Source" -collapse 1;
+		editorTemplate -addControl "sisirHairSet";
+		editorTemplate -addControl "sisirSourceFile";
+		editorTemplate -addControl "sisirMaterialId";
+		editorTemplate -addControl "strandCount";
+		editorTemplate -addControl "pointCount";
+	editorTemplate -endLayout;
+
+	editorTemplate -suppress "hairData";
+	AEshapeTemplate $nodeName;
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}
