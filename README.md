@@ -138,9 +138,9 @@ Both are safe to delete.
 
 ## Contributing
 
-Bug reports and pull requests are welcome. This repository is a snapshot of the plug-ins as they
-ship with Sisir, so accepted changes are merged upstream and come back here with the next Sisir
-release.
+Bug reports and pull requests are welcome. This repository is a published copy of the plug-ins,
+updated automatically from Sisir's own repository, so pull requests are not merged here: accepted
+changes are made in Sisir and appear here with the next update. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
