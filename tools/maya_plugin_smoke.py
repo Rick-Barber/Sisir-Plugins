@@ -158,6 +158,28 @@ for path in (mb_path, ma_path):
     back_strands = sum(cmds.getAttr(s + ".strandCount") for s in back)
     check(back_strands == expected_strands, "%s reopens with every strand (%d)" % (os.path.basename(path), back_strands))
 
+# Scenes saved by earlier releases must keep opening: a .mb names Sisir's types by ID and stores
+# attribute values by name, so IDs are never renumbered (plugins/maya/src/PluginIds.h), the hair
+# data keeps reading SHD1 (plugins/common/HairBuffers.cpp), and attributes are only ever added.
+import maya.api.OpenMaya as om2
+check(om2.MNodeClass("sisirHairShape").typeId.id() == 0x00143001, "sisirHairShape keeps type ID 0x00143001")
+fixture = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "maya_hair_scene_v1.mb")
+cmds.file(fixture, open=True, force=True)
+old = cmds.ls(type="sisirHairShape") or []
+check(len(old) == 1 and not cmds.ls(type=["unknown", "unknownDag"]), "a scene saved by the first release opens its hair shape")
+if old:
+    data = om2.MFnDependencyNode(om2.MSelectionList().add(old[0]).getDependNode(0)).findPlug("hairData", False).asMObject()
+    check(om2.MFnPluginData(data).typeId().id() == 0x00143000, "sisirHairData keeps type ID 0x00143000")
+    check((cmds.getAttr(old[0] + ".strandCount"), cmds.getAttr(old[0] + ".pointCount")) == (45, 900),
+          "its SHD1 hair data reads back (45 strands, 900 points)")
+    check(cmds.getAttr(old[0] + ".sisirHairSet") == "Whiskers", "its stored attribute values read back")
+shipped = ["colorMode", "displayPercent", "hairData", "pointCount", "renderPercent", "setColor", "setColorR",
+           "setColorG", "setColorB", "sisirGroomAo", "sisirGroomRoughness", "sisirHairSet", "sisirMaterialId",
+           "sisirSourceFile", "strandCount", "widthScale"]
+attrs = set(om2.MFnAttribute(a).name for a in om2.MNodeClass("sisirHairShape").getAttributes())
+missing = [a for a in shipped if a not in attrs]
+check(not missing, "sisirHairShape keeps every shipped attribute%s" % (": missing " + ", ".join(missing) if missing else ""))
+
 # Alembic export works on the selection only. The import's root group selected holds every
 # visible hair set, nested two levels down: that export is what tools/abc_export_parity_tests.cpp
 # compares with Sisir's own (it needs scale=realWorld).
